@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The game is made by aman azmi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #ff69b4;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #welcome, #quiz, #result {
+            margin-top: 20px;
+        }
+
+        #question {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .option, .difficulty-btn {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover, .difficulty-btn:hover {
+            background: #ff69b4;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .option.selected {
+            background: #90ee90;
+            color: #333;
+        }
+
+        .option.correct {
+            background: #28a745;
+            color: white;
+        }
+
+        .option.wrong {
+            background: #dc3545;
+            color: white;
+        }
+
+        #next-btn, #restart-btn {
+            background: #ff69b4;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        #next-btn:hover, #restart-btn:hover {
+            background: #ff1493;
+            transform: translateY(-2px);
+        }
+
+        #timer {
+            font-size: 1.2em;
+            color: #ff69b4;
+            margin-bottom: 10px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #progress {
+            height: 100%;
+            background: #ff69b4;
+            width: 0;
+            transition: width 0.5s ease;
+        }
+
+        #feedback {
+            font-size: 1.1em;
+            margin: 10px 0;
+            color: #333;
+        }
+
+        #result {
+            animation: fadeIn 1s ease-in;
+        }
+
+        #score {
+            font-size: 1.5em;
+            color: #ff69b4;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            #question {
+                font-size: 1.2em;
+            }
+
+            .option, .difficulty-btn {
+                font-size: 1em;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sanjana dikha do apna gyaan duniya ko</h1>
+        <div id="welcome">
+            <h2>Sanjana, Easy choose kar lo hard tumhare bas ka nhi hai!</h2>
+            <div class="difficulty-btn" onclick="startQuiz('easy')">Easy</div>
+            <div class="difficulty-btn" onclick="startQuiz('medium')">Medium</div>
+            <div class="difficulty-btn" onclick="startQuiz('hard')">Hard</div>
+        </div>
+        <div id="quiz" style="display: none;">
+            <div id="timer">Time: 15s</div>
+            <div id="progress-bar"><div id="progress"></div></div>
+            <h2 id="question"></h2>
+            <div id="options"></div>
+            <div id="feedback"></div>
+            <button id="next-btn">Aage Badho</button>
+        </div>
+        <div id="result" style="display: none;">
+            <h2>Result</h2>
+            <p id="score"></p>
+            <button id="restart-btn">Fir se Khelo</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        const quizData = {
+            easy: [
+                { question: "Bharat ka rashtriya pakshi kaunsa hai?", options: ["Peacock", "Parrot", "Eagle", "Sparrow"], answer: "Peacock" },
+                { question: "Taj Mahal kahan sthit hai?", options: ["Delhi", "Agra", "Jaipur", "Lucknow"], answer: "Agra" },
+                { question: "Bharat ka rashtriya phool kaunsa hai?", options: ["Rose", "Lotus", "Sunflower", "Marigold"], answer: "Lotus" },
+                { question: "Bharat ka rashtriya geet kaunsa hai?", options: ["Jana Gana Mana", "Vande Mataram", "Saare Jahan Se Achha", "Ae Mere Watan"], answer: "Vande Mataram" },
+                { question: "Bharat ka rashtriya ped kaunsa hai?", options: ["Neem", "Banyan", "Peepal", "Mango"], answer: "Banyan" },
+                { question: "Bharat ka rashtriya khel kaunsa hai?", options: ["Cricket", "Hockey", "Football", "Kabaddi"], answer: "Hockey" },
+                { question: "Vishwa ka sabse uncha parvat kaunsa hai?", options: ["K2", "Kangchenjunga", "Mount Everest", "Lhotse"], answer: "Mount Everest" },
+                { question: "Bharat ke kitne rajya hain?", options: ["28", "29", "30", "31"], answer: "28" },
+                { question: "Aman Sanjana ka kya lagta hai?", options: ["bf", "bf", "bf", "bf"], answer: "bf" },
+                { question: "Bharat ka pehla chand mission kaunsa tha?", options: ["Chandrayaan-1", "Mangalyaan", "Gaganyaan", "Chandrayaan-2"], answer: "Chandrayaan-1" }
+            ],
+            medium: [
+                { question: "Vishwa ka sabse bada mahasagar kaunsa hai?", options: ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Southern Ocean"], answer: "Pacific Ocean" },
+                { question: "Vishwa ka sabse lamba nadi kaunsi hai?", options: ["Nile", "Amazon", "Yangtze", "Mississippi"], answer: "Nile" },
+                { question: "Bharat ka pehla mahila pradhan mantri kaun thi?", options: ["Sonia Gandhi", "Indira Gandhi", "Pratibha Patil", "Sushma Swaraj"], answer: "Indira Gandhi" },
+                { question: "Vishwa ka sabse bada prani kaunsa hai?", options: ["Blue Whale", "Elephant", "Giraffe", "Rhinoceros"], answer: "Blue Whale" },
+                { question: "DNA ka full form kya hai?", options: ["Deoxyribonucleic Acid", "Dioxyribonucleic Acid", "Deoxyribonucleus Acid", "Dioxyribonucleus Acid"], answer: "Deoxyribonucleic Acid" },
+                { question: "Bharat ka sabse bada rajya (area ke hisaab se) kaunsa hai?", options: ["Uttar Pradesh", "Rajasthan", "Madhya Pradesh", "Maharashtra"], answer: "Rajasthan" },
+                { question: "Vishwa ka sabse bada rainforest kaunsa hai?", options: ["Amazon Rainforest", "Congo Rainforest", "Daintree Rainforest", "Sundarbans"], answer: "Amazon Rainforest" },
+                { question: "Harry Potter series ke lekhak kaun hain?", options: ["J.K. Rowling", "R.K. Narayan", "Roald Dahl", "Enid Blyton"], answer: "J.K. Rowling" },
+                { question: "Vishwa ka sabse gehra samudra kaunsa hai?", options: ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Arctic Ocean"], answer: "Pacific Ocean" },
+                { question: "UNESCO ki sthapna kab hui thi?", options: ["1945", "1950", "1960", "1970"], answer: "1945" }
+            ],
+            hard: [
+                { question: "Vishwa ka sabse bada sahara kya hai?", options: ["Sahara Desert", "Gobi Desert", "Kalahari Desert", "Antarctic Desert"], answer: "Antarctic Desert" },
+                { question: "Bhagam biga buga nsjsjs jdjsj?", options: ["Free fire", "hdskdj", "jsjsjsxjd", "jxjsjsjsdn"], answer: "Free fire" },
+                { question: "Sistine Chapel ki ceiling kisne paint ki?", options: ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"], answer: "Michelangelo" },
+                { question: "Sabse badi pagal koun hai?", options: ["Sanjana", "Aroohi", "Anaya", "kumkum"], answer: "Aroohi" },
+                { question: "Renaissance ka janmsthan kaunsa desh hai?", options: ["France", "Italy", "Spain", "Germany"], answer: "Italy" },
+                { question: "Vishwa ka sabse chhota desh kaunsa hai?", options: ["Monaco", "Vatican City", "Maldives", "San Marino"], answer: "Vatican City" },
+                { question: "Penicillin ki khoj kisne ki thi?", options: ["Alexander Fleming", "Louis Pasteur", "Robert Koch", "Edward Jenner"], answer: "Alexander Fleming" },
+                { question: "Vishwa ka pehla mahila pradhan mantri kaun thi?", options: ["Indira Gandhi", "Sirimavo Bandaranaike", "Golda Meir", "Margaret Thatcher"], answer: "Sirimavo Bandaranaike" },
+                { question: "Light ka sabse tez medium kaunsa hai?", options: ["Air", "Water", "Glass", "Vacuum"], answer: "Vacuum" },
+                { question: "Theory of Relativity kisne di thi?", options: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Stephen Hawking"], answer: "Albert Einstein" }
+            ]
+        };
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timeLeft = 15;
+        let timerInterval;
+        let selectedDifficulty = '';
+        let currentQuizData = [];
+
+        const welcomeScreen = document.getElementById('welcome');
+        const quizContainer = document.getElementById('quiz');
+        const resultContainer = document.getElementById('result');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const nextButton = document.getElementById('next-btn');
+        const restartButton = document.getElementById('restart-btn');
+        const timerElement = document.getElementById('timer');
+        const progressElement = document.getElementById('progress');
+        const feedbackElement = document.getElementById('feedback');
+        const scoreElement = document.getElementById('score');
+
+        // Sound Effects
+        const correctSound = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+        const wrongSound = new Audio('https://www.soundjay.com/buttons/beep-02.mp3');
+
+        function startQuiz(difficulty) {
+            selectedDifficulty = difficulty;
+            currentQuizData = quizData[difficulty];
+            welcomeScreen.style.display = 'none';
+            quizContainer.style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const currentQuiz = currentQuizData[currentQuestion];
+            questionElement.innerText = currentQuiz.question;
+            optionsElement.innerHTML = '';
+            feedbackElement.innerText = '';
+            timeLeft = 15;
+            timerElement.innerText = `Time: ${timeLeft}s`;
+
+            currentQuiz.options.forEach(option => {
+                const button = document.createElement('div');
+                button.innerText = option;
+                button.classList.add('option');
+                button.addEventListener('click', () => selectOption(option, button));
+                optionsElement.appendChild(button);
+            });
+
+            // Update Progress Bar
+            progressElement.style.width = `${((currentQuestion + 1) / currentQuizData.length) * 100}%`;
+
+            // Start Timer
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.innerText = `Time: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    selectOption(null, null); // Auto-move to next if time's up
+                }
+            }, 1000);
+        }
+
+        function selectOption(selected, button) {
+            clearInterval(timerInterval);
+            const currentQuiz = currentQuizData[currentQuestion];
+            document.querySelectorAll('.option').forEach(btn => btn.classList.remove('selected'));
+
+            if (selected) {
+                button.classList.add('selected');
+                if (selected === currentQuiz.answer) {
+                    score++;
+                    feedbackElement.innerText = 'Sahi Jawab! 🎉';
+                    feedbackElement.style.color = '#28a745';
+                    button.classList.add('correct');
+                    correctSound.play();
+                } else {
+                    feedbackElement.innerText = `Galat! Sahi jawab: ${currentQuiz.answer} hai Motki`;
+                    feedbackElement.style.color = '#dc3545';
+                    button.classList.add('wrong');
+                    wrongSound.play();
+                }
+            } else {
+                feedbackElement.innerText = `Time's up! Sahi jawab: ${currentQuiz.answer}`;
+                feedbackElement.style.color = '#dc3545';
+                wrongSound.play();
+            }
+
+            document.querySelectorAll('.option').forEach(btn => btn.style.pointerEvents = 'none');
+            nextButton.focus();
+        }
+
+        nextButton.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < currentQuizData.length) {
+                loadQuestion();
+            } else {
+                quizContainer.style.display = 'none';
+                resultContainer.style.display = 'block';
+                scoreElement.innerText = `Sanjana, tumhara ${selectedDifficulty} level ka score hai: ${score} / ${currentQuizData.length}`;
+                if (score >= currentQuizData.length * 0.7) { // 70% or more
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }
+        });
+
+        restartButton.addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            quizContainer.style.display = 'none';
+            resultContainer.style.display = 'none';
+            welcomeScreen.style.display = 'block';
+        });
+
+        // Initial state
+        welcomeScreen.style.display = 'block';
+        quizContainer.style.display = 'none';
+        resultContainer.style.display = 'none';
+    </script>
+</body>
+</html>
